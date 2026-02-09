@@ -364,34 +364,109 @@
     recordAttempt({ correct: false, rtSeconds: rt });
   });
 
-  speakBtn.addEventListener("click", async () => {
-    const store = ensureStoreShape(loadStore());
-    const settings = store.settings;
+ function normalizeSpeechText(text) {
+  // normalize smart apostrophes, lowercase, remove punctuation except apostrophes
+  return (text || "")
+    .toLowerCase()
+    .replace(/’/g, "'")
+    .replace(/[^a-z' ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-    if (settings.speechCheck === "off") {
-      // still let them speak, but no checking
-      await listenOnce();
-      return;
+function speechMatchesTarget(transcript, targetWord) {
+  const t = normalizeSpeechText(transcript);
+  const target = normalizeSpeechText(targetWord);
+
+  if (!t || !target) return false;
+
+  // exact full match
+  if (t === target) return true;
+
+  // token match (kids might say "the ... the" or "it's the")
+  const tokens = t.split(" ").filter(Boolean);
+
+  // accept if any token equals the target
+  if (tokens.includes(target)) return true;
+
+  // accept if last token equals target (common)
+  if (tokens.length && tokens[tokens.length - 1] === target) return true;
+
+  return false;
+}
+
+async function listenOnceDetailed() {
+  return new Promise((resolve) => {
+    if (!speechSupported()) {
+      return resolve({ ok: false, text: null, confidence: null, reason: "not_supported" });
     }
 
-    const rt = (Date.now() - wordShownAt) / 1000;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = "en-US";
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
 
-    const res = await listenOnce();
-    if (!res.ok) {
-      // If mic is blocked, don’t punish — just prompt.
-      metaEl.textContent = "Mic not available. Use ✅/❌ buttons (or allow microphone).";
-      return;
+    rec.onresult = (e) => {
+      const alt = e.results?.[0];
+      const transcript = (alt?.[0]?.transcript || "").trim();
+      const confidence = typeof alt?.[0]?.confidence === "number" ? alt[0].confidence : null;
+      resolve({ ok: true, text: transcript, confidence });
+    };
+
+    rec.onerror = () => resolve({ ok: false, text: null, confidence: null, reason: "error" });
+
+    try {
+      rec.start();
+    } catch {
+      resolve({ ok: false, text: null, confidence: null, reason: "blocked" });
     }
-
-    const said = (res.text || "").replace(/[^\w']/g, "");
-    const target = currentWord.toLowerCase();
-
-    // Some kids might say “uh… the”. Basic cleanup:
-    const normalized = said.split(" ").pop() || said;
-
-    const isCorrect = normalized === target;
-    recordAttempt({ correct: isCorrect, rtSeconds: rt });
   });
+}
+
+speakBtn.addEventListener("click", async () => {
+  const store = ensureStoreShape(loadStore());
+  const settings = store.settings;
+
+  // Reaction time from when the word appeared
+  const rt = (Date.now() - wordShownAt) / 1000;
+
+  // If speech checking is turned off, just listen (no marking)
+  if (settings.speechCheck === "off") {
+    await listenOnceDetailed();
+    metaEl.textContent = "Heard you (speech check is off). Use ✅/❌ buttons.";
+    return;
+  }
+
+  const res = await listenOnceDetailed();
+
+  if (!res.ok) {
+    metaEl.textContent = "Mic not available. Use ✅/❌ buttons (or allow microphone).";
+    return;
+  }
+
+  const heard = res.text || "";
+  const isCorrect = speechMatchesTarget(heard, currentWord);
+
+  // Optional: require some minimum confidence before auto-marking correct
+  // (you can tweak this number or remove it)
+  const minConfidence = 0.55;
+  const confidentEnough = res.confidence == null ? true : res.confidence >= minConfidence;
+
+  if (isCorrect && confidentEnough) {
+    // ✅ Auto-mark correct
+    recordAttempt({ correct: true, rtSeconds: rt });
+    return;
+  }
+
+  // Not matched (or low confidence): do NOT auto-mark incorrect.
+  // Keep same word so they can try again or you can tap.
+  metaEl.textContent =
+    `Heard: "${heard}"` +
+    (res.confidence != null ? ` (conf: ${res.confidence.toFixed(2)})` : "") +
+    ` — Say the word again, or tap ✅/❌.`;
+});
+
 
   resetListBtn.addEventListener("click", () => {
     const store = ensureStoreShape(loadStore());
