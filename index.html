@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fry Fluency</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Fry Fluency</div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="practice">Practice</button>
+      <button class="tab" data-tab="growth">Growth</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- PRACTICE -->
+    <section id="practice" class="panel active">
+      <div class="card">
+        <div class="row">
+          <label class="field">
+            <span>Word List</span>
+            <select id="listSelect"></select>
+          </label>
+
+          <div class="spacer"></div>
+
+          <div class="pill" id="sessionPill">Session: 0</div>
+          <div class="pill" id="masteryPill">Mastered: 0%</div>
+        </div>
+
+        <div class="word" id="word">the</div>
+
+        <div class="row">
+          <button class="btn" id="hearBtn">🔊 Hear it</button>
+          <button class="btn" id="repeatBtn">🔁 Repeat</button>
+          <button class="btn" id="speakBtn">🎤 Speak</button>
+        </div>
+
+        <div class="hint" id="hint">
+          Tip: Use <b>Speak</b> if your Chromebook allows microphone. Otherwise use ✅/❌ buttons.
+        </div>
+
+        <div class="row">
+          <button class="btn good" id="correctBtn">✅ Correct</button>
+          <button class="btn bad" id="missedBtn">❌ Missed</button>
+        </div>
+
+        <div class="row">
+          <div class="meta" id="meta"></div>
+          <div class="spacer"></div>
+          <button class="btn ghost" id="resetListBtn">Reset this list</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- GROWTH -->
+    <section id="growth" class="panel">
+      <div class="card">
+        <h2>Growth</h2>
+        <div class="grid2">
+          <div class="stat">
+            <div class="statLabel">Mastery</div>
+            <div class="statValue" id="gMastery">0%</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Accuracy</div>
+            <div class="statValue" id="gAccuracy">0%</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Total Attempts</div>
+            <div class="statValue" id="gAttempts">0</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">Sessions Completed</div>
+            <div class="statValue" id="gSessions">0</div>
+          </div>
+        </div>
+
+        <h3>Words to Watch</h3>
+        <p class="sub">Highest miss rate or slowest words show up here.</p>
+        <div id="watchList" class="chips"></div>
+
+        <div class="row">
+          <button class="btn ghost" id="exportBtn">Export progress</button>
+          <button class="btn ghost" id="clearAllBtn">Clear ALL progress</button>
+        </div>
+
+        <pre class="export" id="exportOut" hidden></pre>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="settings" class="panel">
+      <div class="card">
+        <h2>Settings</h2>
+
+        <div class="grid2">
+          <label class="field">
+            <span>Mastery rule (correct + speed)</span>
+            <select id="masteryMode">
+              <option value="accuracy_speed" selected>Accuracy + Speed</option>
+              <option value="accuracy_only">Accuracy only</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Seconds to count as “fast”</span>
+            <input id="speedThreshold" type="number" step="0.1" min="0.5" max="10" value="2.5" />
+          </label>
+
+          <label class="field">
+            <span>Correct reps to master a word</span>
+            <input id="repsToMaster" type="number" min="2" max="20" value="5" />
+          </label>
+
+          <label class="field">
+            <span>Auto-speak when new word appears</span>
+            <select id="autoSpeak">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Voice</span>
+            <select id="voiceSelect"></select>
+          </label>
+
+          <label class="field">
+            <span>Speech recognition check</span>
+            <select id="speechCheck">
+              <option value="on" selected>On (if supported)</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="sub">
+          Note: Progress is stored on this Chromebook/browser. No login needed, but switching devices can reset progress.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
