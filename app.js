@@ -350,6 +350,8 @@
 
     saveStore(store);
     nextWord(true);
+    // ✅ UPDATE PILLS IMMEDIATELY AFTER RECORDING ATTEMPT
+    updatePills();
   }
 
   hearBtn.addEventListener("click", () => speak(currentWord));
